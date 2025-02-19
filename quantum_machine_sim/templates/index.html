@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Machine Simulation</title>
+    <style>
+        body { margin: 0; overflow: hidden; text-align: center; font-family: Arial, sans-serif; }
+        canvas { display: block; }
+        .controls, .timeline, .equations, .graph, .annotations, .observer-controls {
+            position: absolute;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .controls { top: 10px; left: 10px; }
+        .timeline { bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+        .timeline div { padding: 5px 10px; border: 1px solid black; border-radius: 5px; font-weight: bold; }
+        .equations { top: 10px; right: 10px; font-weight: bold; font-size: 18px; }
+        .graph { bottom: 10px; right: 10px; width: 300px; height: 150px; border: 1px solid black; display: block; }
+        .annotations { top: 50px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: bold; }
+        .observer-controls { top: 90px; left: 10px; }
+        #observer-checkbox { margin-right: 5px; }
+        .speed-slider { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="startExperiment()">Start Experiment</button>
+        <button onclick="rotateView()">Rotate View</button>
+    </div>
+
+    <div class="observer-controls">
+        <label for="observer-checkbox">Observer:</label>
+        <input type="checkbox" id="observer-checkbox" onchange="toggleObserver()">
+        <br>
+        <label for="speed-slider">Animation Speed:</label>
+        <input type="range" id="speed-slider" class="speed-slider" min="3" max="3.5" step="0.1" value="3" onchange="updateAnimationSpeed(this.value)">
+    </div>
+
+    <div class="timeline" id="timeline">
+        <div id="stage1">Schrödinger's Cat</div>
+        <div id="stage2">Young's Double-Slit</div>
+        <div id="stage3">Electron Absorption</div>
+    </div>
+
+    <div class="equations" id="equations">Equation: N/A</div>
+    <canvas class="graph" id="graph"></canvas>
+    <div class="annotations" id="annotations">Welcome to the Quantum Experiment</div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script>
+        let scene, camera, renderer, lightBeam, box, slitPanel, semiconductor;
+        let stageIndex = 0, viewAngle = 0, energyGraphCtx, graphX = 0, graphY = 0;
+        let photons = [];  // To store the photon objects
+        let electrons = []; // To store the electron objects
+        let graphStarted = false; // Track when the graph starts
+        let animationSpeed = 2; // Default animation speed (set to 0.25)
+        let observerPresent = false; // Toggle for observer presence (false by default)
+        
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // Create a box divided into three parts
+            const boxGeometry = new THREE.BoxGeometry(10, 3, 1); // Adjusted width
+            const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, wireframe: true });
+            box = new THREE.Mesh(boxGeometry, boxMaterial);
+            scene.add(box);
+
+            // Create the first panel with no slits (will have rectangular holes)
+            const firstPanelGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Panel size
+            const panelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 }); // Changed to white
+            const firstPanel = new THREE.Mesh(firstPanelGeometry, panelMaterial);
+            firstPanel.position.set(-5, 0, 0); // Move the first panel
+            scene.add(firstPanel);
+
+            // Create the second divider with two rectangular holes
+            const dividerGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Divider size
+            const dividerMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
+            const secondDivider = new THREE.Mesh(dividerGeometry, dividerMaterial);
+            secondDivider.position.set(-2, 0, 0); // Move the second divider to the left
+            scene.add(secondDivider);
+
+            // Create the two rectangular holes with white borders
+            const holeGeometry = new THREE.BoxGeometry(1.8, 0.1, 1); // Horizontal hole size (wider in x, thinner in y)
+            const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 1 });
+            
+            const hole1 = new THREE.Mesh(holeGeometry, holeMaterial);
+            const hole2 = new THREE.Mesh(holeGeometry, holeMaterial);
+            
+            // Position holes horizontally, spaced equally
+            hole1.position.set(-2, 0.5, 0); // Upper hole
+            hole2.position.set(-2, -0.5, 0); // Lower hole
+            
+            scene.add(hole1);
+            scene.add(hole2);
+            
+            // Create white border effect for the holes
+            const borderGeometry = new THREE.BoxGeometry(1.9, 0.2, 1); // Border size
+            const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White border
+            
+            const border1 = new THREE.Mesh(borderGeometry, borderMaterial);
+            const border2 = new THREE.Mesh(borderGeometry, borderMaterial);
+            
+            // Position the borders around the holes
+            border1.position.set(-2, 0.5, 0); 
+            border2.position.set(-2, -0.5, 0); 
+            
+            scene.add(border1);
+            scene.add(border2);
+
+            // Create the third divider (no holes)
+            const thirdDivider = new THREE.Mesh(dividerGeometry, dividerMaterial);
+            thirdDivider.position.set(1.33, 0, 0); // Move the third divider to the left
+            scene.add(thirdDivider);
+
+            // Create light beam (adjust the position)
+            const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 5, 32);
+            const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
+            lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
+            lightBeam.rotation.z = Math.PI / 2;
+            lightBeam.position.set(-5, 0, 0); // Adjusted position
+            scene.add(lightBeam);
+
+            // Setup canvas for energy graph
+            energyGraphCtx = document.getElementById("graph").getContext("2d");
+            energyGraphCtx.clearRect(0, 0, 300, 150); // Clear previous drawings
+
+            // Draw initial axis labels only once
+            energyGraphCtx.font = "12px Arial";
+            energyGraphCtx.fillText("Energy", 10, 10); // Y-axis label
+            energyGraphCtx.fillText("Time", 230, 140); // X-axis label
+            energyGraphCtx.fillText("Speed", 230, 20); // Speed label near the top
+
+            camera.position.z = 5;
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        function resetExperiment() {
+            // Reset all elements to their initial positions before starting again
+            lightBeam.position.set(-5, 0, 0); // Reset light beam position
+            photons.forEach(p => scene.remove(p)); // Remove any existing photons
+            electrons.forEach(e => scene.remove(e)); // Remove any existing electrons
+            photons = []; // Reset photon array
+            electrons = []; // Reset electron array
+            graphStarted = false; // Reset graph flag
+            energyGraphCtx.clearRect(0, 0, 300, 150); // Clear the graph
+            graphX = 0;
+            graphY = 0;
+
+            // Redraw initial axis labels
+            energyGraphCtx.font = "12px Arial";
+            energyGraphCtx.fillText("Energy", 10, 10); // Y-axis label
+            energyGraphCtx.fillText("Time", 230, 140); // X-axis label
+            energyGraphCtx.fillText("Speed", 230, 20); // Speed label near the top
+        }
+
+        function startExperiment() {
+            resetExperiment(); // Reset everything before starting the experiment
+            document.querySelector(".graph").style.display = "block"; // Show graph when experiment starts
+            updateEquations("Schrödinger's Equation: Ψ(x,t) = A * exp(i(kx - ωt))");
+            updateAnnotations("Schrödinger's Equation Determines Path Probability");
+            gsap.to(lightBeam.position, { x: -2, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+                updateEquations("Young's Double-Slit: I(x) = I0 * cos²(π * x / λ)");
+                updateAnnotations("Young's Double-Slit Experiment - Light Interference");
+                showPhotons(); // Show photons gradually as beam moves
+                if (!graphStarted) startGraph(); // Start drawing the graph once the experiment begins
+                gsap.to(lightBeam.position, { x: 1.33, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+                    updateEquations("Electron Absorption: E = hν + ½mv²");
+                    updateAnnotations("Electron Absorption - Energy Gain");
+                    showElectrons(); // Show electrons after photon interaction
+                    gsap.to(lightBeam.position, { x: 4, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+                        updateEnergyGraph(50); // Update the graph to show energy gain
+                        updateAnnotations("Experiment Complete!"); // Final annotation
+                    }}); 
+                }}); 
+            }}); 
+        }
+
+        function startGraph() {
+            graphStarted = true;
+            updateEnergyGraph(5); // Start the graph drawing on first step
+        }
+
+        function showPhotons() {
+            // Gradually show photons (with observer behavior)
+            for (let i = -0.5; i <= 0.5; i += 0.1) {
+                setTimeout(() => {
+                    const dotGeometry = new THREE.SphereGeometry(0.05, 32, 32);
+                    const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                    
+                    if (observerPresent) {
+                        // Horizontal arrangement when observer is present
+                        dot.position.set(lightBeam.position.x + i, 0, 0);
+                    } else {
+                        // Vertical arrangement when no observer
+                        dot.position.set(lightBeam.position.x, i, 0);
+                    }
+
+                    scene.add(dot); // Add each dot to the scene
+                    photons.push(dot); // Store the photon for later removal
+                }, 500); // Delay the appearance of each photon
+            }
+        }
+
+        function showElectrons() {
+            // Gradually show electrons (with observer behavior)
+            for (let i = -0.5; i <= 0.5; i += 0.05) {
+                setTimeout(() => {
+                    const dotGeometry = new THREE.SphereGeometry(0.025, 32, 32);
+                    const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+
+                    if (observerPresent) {
+                        // Horizontal arrangement when observer is present
+                        dot.position.set(lightBeam.position.x + i, 0, 0);
+                    } else {
+                        // Vertical arrangement when no observer
+                        dot.position.set(lightBeam.position.x, i, 0);
+                    }
+
+                    scene.add(dot); // Add each dot to the scene
+                    electrons.push(dot); // Store the electron for later removal
+                }, 500); // Delay the appearance of each electron
+            }
+        }
+
+        function toggleObserver() {
+            observerPresent = document.getElementById("observer-checkbox").checked;
+            updateAnnotations(observerPresent ? "Observer Present" : "No Observer");
+        }
+
+        function updateAnimationSpeed(speed) {
+            animationSpeed = speed;
+        }
+
+        function updateEquations(text) {
+            document.getElementById("equations").innerText = "Equation: " + text;
+        }
+
+        function updateAnnotations(text) {
+            document.getElementById("annotations").innerText = text;
+        }
+
+        function updateEnergyGraph(energy) {
+            energyGraphCtx.beginPath();
+            energyGraphCtx.moveTo(graphX, graphY);
+            graphX += 10;
+            graphY = 150 - energy;
+            energyGraphCtx.lineTo(graphX, graphY);
+            energyGraphCtx.strokeStyle = '#ff0000';
+            energyGraphCtx.stroke();
+        }
+
+        function rotateView() {
+            viewAngle += Math.PI / 2; // Rotate the camera by 90 degrees
+            gsap.to(camera.position, {
+                duration: 1,
+                x: 5 * Math.cos(viewAngle),
+                z: 5 * Math.sin(viewAngle),
+                onUpdate: () => camera.lookAt(scene.position)
+            });
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

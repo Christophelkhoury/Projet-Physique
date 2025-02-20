@@ -7,5 +7,5 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
 #flask --app quantum_machine_sim/app.py run

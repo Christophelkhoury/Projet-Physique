@@ -66,4 +66,3 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 
 ## Contact
 For questions or suggestions, reach out via email at [elkhourychristophe2121@gmail.com] or open an issue on GitHub.
-

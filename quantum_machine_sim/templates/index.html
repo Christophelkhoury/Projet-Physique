@@ -23,6 +23,31 @@
         .observer-controls { top: 90px; left: 10px; }
         #observer-checkbox { margin-right: 5px; }
         .speed-slider { margin-top: 10px; }
+        .info-button {
+            position: absolute;
+            bottom: 190px; /* Adjusted to be at the same level as the top of the graph */
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid black;
+        }
+        .info-box {
+            display: none;
+            position: absolute;
+            bottom: 70px; /* Raised higher */
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid black;
+            width: 250px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -47,7 +72,18 @@
 
     <div class="equations" id="equations">Equation: N/A</div>
     <canvas class="graph" id="graph"></canvas>
-    <div class="annotations" id="annotations">Welcome to the Quantum Experiment</div>
+    <div class="annotations" id="annotations">
+        <strong>This is an improved version of a solar panel</strong><br>
+        Welcome to the Quantum Experiment
+    </div>
+
+    <div class="info-button" id="info-button" onclick="toggleInfo()">+</div>
+    <div class="info-box" id="info-box">
+        <strong>This is an improved version of a solar panel</strong><br><br>
+        <em>Without an Observer:</em> The wave-like nature of the particles leads to an interference pattern.
+        <br><br>
+        <em>With an Observer:</em> The particles behave as particles, forming a horizontal pattern.
+    </div>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -272,6 +308,18 @@
                 z: 5 * Math.sin(viewAngle),
                 onUpdate: () => camera.lookAt(scene.position)
             });
+        }
+
+        function toggleInfo() {
+            const infoBox = document.getElementById("info-box");
+            const infoButton = document.getElementById("info-button");
+            if (infoBox.style.display === "none") {
+                infoBox.style.display = "block";
+                infoButton.innerText = "-";
+            } else {
+                infoBox.style.display = "none";
+                infoButton.innerText = "+";
+            }
         }
 
         window.onload = init;

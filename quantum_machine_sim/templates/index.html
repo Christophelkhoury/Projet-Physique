@@ -48,6 +48,42 @@
         }
         .info-box { bottom: 70px; left: 50%; transform: translateX(-50%); }
         .info-box-2 { bottom: 0%; left: 15%; transform: translateX(-50%); } /* Moved towards the bottom */
+        .explanation-button {
+            position: absolute;
+            bottom: 0px; /* Adjusted to be at the same level as the top of the graph */
+            left: 5%; /* Moved more to the left */
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px; /* Made the button bigger */
+            border-radius: 5px;
+            font-size: 20px; /* Increased font size */
+            cursor: pointer;
+            border: 1px solid black;
+        }
+
+        .explanation-box {
+            display: none;
+            position: absolute;
+            top: 0; /* Take up the whole height from top */
+            bottom: 0; /* to bottom */
+            right: 0; /* Positioned on the right */
+            width: 25%; /* Width about a fourth of the page */
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid black;
+            text-align: left;
+            font-size: 16px; /* Larger text */
+            overflow-y: auto; /* Add scroll if content overflows */
+            z-index: 20; /* Ensure it covers other elements */
+        }
+        .highlight {
+            background-color: yellow; /* Highlight color */
+        }
+        .controls button {
+            font-size: 18px; /* Bigger buttons */
+            padding: 10px 20px; /* More padding */
+        }
     </style>
 </head>
 <body>
@@ -76,32 +112,36 @@
         <strong>This is an improved version of a solar panel</strong><br>
         Welcome to the Quantum Experiment
     </div>
-
-    <div class="info-button" id="info-button" onclick="toggleInfo()">+</div>
-    <div class="info-box" id="info-box">
-        <strong>This is an improved version of a solar panel</strong><br><br>
-        <em>Without an Observer:</em> The wave-like nature of the particles leads to an interference pattern.
-        <br><br>
-        <em>With an Observer:</em> The particles behave as particles, forming a horizontal pattern.
-    </div>
-
-    <div class="info-button-2" id="info-button-2" onclick="toggleInfo2()">+</div>
-    <div class="info-box-2" id="info-box-2">
-        Between the first and second panel, Schrödinger’s theory determines the particle's path through the slits.
-        <br><br>
-        Between the second and third panel, the light beam travels through the slits to the third panel, absorbing the particles.
-        <br><br>
-        Without an observer, particles form a vertical pattern due to their wave-like nature, creating an interference pattern.
-        <br><br>
-        With an observer, particles behave as discrete particles, forming a horizontal pattern.
-        <br><br>
-        Observation changes the outcome from an interference pattern to a discrete particle pattern.
-    </div>
-
     <div class="panel-number" style="position: absolute; top: 20px; left: 20%; font-size: 24px; font-weight: bold;">1</div>
     <div class="panel-number" style="position: absolute; top: 20px; left: 40%; font-size: 24px; font-weight: bold;">2</div>
     <div class="panel-number" style="position: absolute; top: 20px; left: 60%; font-size: 24px; font-weight: bold;">3</div>
     <div class="panel-number" style="position: absolute; top: 20px; left: 80%; font-size: 24px; font-weight: bold;">4</div>
+
+    <div class="explanation-button" id="explanation-button" onclick="toggleExplanation()">Explanation</div>
+    <div class="explanation-box" id="explanation-box">
+    <em style="font-size: 16px; color: red; font-weight: bold;">Note: Click on the text to highlight the corresponding part of the machine.</em><br><br>
+    <strong style="font-size: 18px;">Towards a More Efficient Solar Panel Thanks to Quantum Physics</strong><br><br>
+    <ul style="font-size: 16px;">
+        <li id="explanation-empty-space" onclick="highlightPart('empty-space')"><strong>Empty Space (Before the First Panel) – Schrödinger’s Superposition</strong><br>
+            Before reaching any physical barrier, photons exist in a superposition state, meaning they have the potential to take multiple paths at once. Their behavior remains undefined until they interact with the system.
+        </li><br>
+        <li id="explanation-first-panel" onclick="highlightPart('first-panel')"><strong>First Panel (Metal with Two Slits) – Quantum Measurement Effect</strong><br>
+            <em>Without Observation:</em> Photons pass through both slits simultaneously as waves, forming an interference pattern beyond this panel.<br>
+            <em>With Observation:</em> Photons act as particles, traveling through one slit only, preventing interference.
+        </li><br>
+        <li id="explanation-second-third-panel" onclick="highlightPart('second-third-panel')"><strong>Space Between the Second and Third Panel – Young’s Interference Theory</strong><br>
+            <em>Without Observation:</em> The interference pattern spreads across this space, causing light redistribution, concentrating photons in specific regions before they reach the semiconductor.<br>
+            <em>With Observation:</em> The photons travel in straight, separate trajectories, arriving at the semiconductor panel without interference effects.
+        </li><br>
+        <li id="explanation-third-panel" onclick="highlightPart('third-panel')"><strong>Third Panel (Semiconductor – Silicon) – Electron Absorption and Energy Conversion</strong><br>
+            Here, electrons absorb photons, gaining energy and increasing speed.<br>
+            The amount of energy gained depends on photon distribution, which is influenced by earlier interference.<br>
+            Efficient absorption leads to higher electricity conversion, making quantum effects crucial to optimizing energy output.
+        </li><br>
+    </ul>
+    <strong>Conclusion</strong><br>
+    By leveraging quantum effects at different stages, light absorption and energy conversion can be optimized. Understanding and controlling these phenomena may lead to more efficient solar panels in the future.
+</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -113,6 +153,7 @@
         let graphStarted = false; // Track when the graph starts
         let animationSpeed = 2; // Default animation speed (set to 0.25)
         let observerPresent = false; // Toggle for observer presence (false by default)
+        let firstPanel, secondPanel, thirdPanel;
         
         function init() {
             scene = new THREE.Scene();
@@ -129,20 +170,20 @@
 
             // Create the first panel with no slits (will have rectangular holes)
             const firstPanelGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Panel size
-            const panelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 }); // Changed to white
-            const firstPanel = new THREE.Mesh(firstPanelGeometry, panelMaterial);
+            const firstPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 }); // Changed to white
+            firstPanel = new THREE.Mesh(firstPanelGeometry, firstPanelMaterial);
             firstPanel.position.set(-5, 0, 0); // Move the first panel
             scene.add(firstPanel);
 
             // Create the second divider with two rectangular holes
-            const dividerGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Divider size
-            const dividerMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
-            const secondDivider = new THREE.Mesh(dividerGeometry, dividerMaterial);
-            secondDivider.position.set(-2, 0, 0); // Move the second divider to the left
-            scene.add(secondDivider);
+            const secondPanelGeometry = new THREE.BoxGeometry(0.3, 3, 1); // Wider divider size
+            const secondPanelMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
+            secondPanel = new THREE.Mesh(secondPanelGeometry, secondPanelMaterial);
+            secondPanel.position.set(-2, 0, 0); // Move the second divider to the left
+            scene.add(secondPanel);
 
             // Create the two rectangular holes with white borders
-            const holeGeometry = new THREE.BoxGeometry(1.8, 0.1, 1); // Horizontal hole size (wider in x, thinner in y)
+            const holeGeometry = new THREE.BoxGeometry(0.6, 0.1, 1); // Less wide horizontal hole size (wider in x, thinner in y)
             const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 1 });
             
             const hole1 = new THREE.Mesh(holeGeometry, holeMaterial);
@@ -156,7 +197,7 @@
             scene.add(hole2);
             
             // Create white border effect for the holes
-            const borderGeometry = new THREE.BoxGeometry(1.9, 0.2, 1); // Border size
+            const borderGeometry = new THREE.BoxGeometry(0.7, 0.2, 1); // Border size
             const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White border
             
             const border1 = new THREE.Mesh(borderGeometry, borderMaterial);
@@ -164,15 +205,16 @@
             
             // Position the borders around the holes
             border1.position.set(-2, 0.5, 0); 
-            border2.position.set(-2, -0.5, 0); 
-            
+            border2.position.set(-2, -0.5, 0);
             scene.add(border1);
             scene.add(border2);
 
-            // Create the third divider (no holes)
-            const thirdDivider = new THREE.Mesh(dividerGeometry, dividerMaterial);
-            thirdDivider.position.set(1.33, 0, 0); // Move the third divider to the left
-            scene.add(thirdDivider);
+            // Create the third divider (no holes) with a different color and wider size
+            const thirdPanelGeometry = new THREE.BoxGeometry(0.4, 3, 1); // Wider divider size
+            const thirdPanelMaterial = new THREE.MeshBasicMaterial({ color:0xffffff, transparent: true, opacity: 0.3 }); // Changed to white
+            thirdPanel = new THREE.Mesh(thirdPanelGeometry, thirdPanelMaterial);
+            thirdPanel.position.set(1.33, 0, 0); // Move the third divider to the left
+            scene.add(thirdPanel);
 
             // Create light beam (adjust the position)
             const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 5, 32);
@@ -348,32 +390,72 @@
                 onUpdate: () => camera.lookAt(scene.position)
             });
         }
+        function highlightPart(part) {
+    // Reset all highlights and opacity states
+    resetHighlights();
 
-        function toggleInfo() {
-            const infoBox = document.getElementById("info-box");
-            const infoButton = document.getElementById("info-button");
-            if (infoBox.style.display === "none") {
-                infoBox.style.display = "block";
-                infoButton.innerText = "-";
-            } else {
-                infoBox.style.display = "none";
-                infoButton.innerText = "+";
-            }
-        }
+    // Highlight the corresponding text and animation part based on the selected part
+    switch(part) {
+        case "empty-space":
+            document.getElementById("explanation-empty-space").classList.add("highlight");
+            if (firstPanel) firstPanel.material.opacity = 1; // Highlighting the first panel (empty space)
+            updateAnnotations("Empty Space (Before the First Panel) - Schrödinger’s Superposition");
+            break;
+        case "first-panel":
+            document.getElementById("explanation-first-panel").classList.add("highlight");
+            if (secondPanel) secondPanel.material.opacity = 1; // Highlight only the first panel
+            updateAnnotations("First Panel (Metal with Two Slits) - Quantum Measurement Effect");
+            break;
+        case "second-third-panel":
+            document.getElementById("explanation-second-third-panel").classList.add("highlight");
+            if (secondPanel) secondPanel.material.opacity = 1; // Highlight second panel
+            if (thirdPanel) thirdPanel.material.opacity = 1; // Highlight the third panel
+            updateAnnotations("Space Between the Second and Third Panel - Young’s Interference Theory");
+            break;
+        case "third-panel":
+            document.getElementById("explanation-third-panel").classList.add("highlight");
+            if (thirdPanel) thirdPanel.material.opacity = 1; // Highlight only the third panel
+            updateAnnotations("Third Panel (Semiconductor – Silicon) - Electron Absorption and Energy Conversion");
+            break;
+    }
+}
 
-        function toggleInfo2() {
-            const infoBox2 = document.getElementById("info-box-2");
-            const infoButton2 = document.getElementById("info-button-2");
-            if (infoBox2.style.display === "none") {
-                infoBox2.style.display = "block";
-                infoButton2.innerText = "-";
-            } else {
-                infoBox2.style.display = "none";
-                infoButton2.innerText = "+";
-            }
-        }
+function resetHighlights() {
+    // Remove highlights from text and animation parts
+    document.getElementById("explanation-empty-space").classList.remove("highlight");
+    document.getElementById("explanation-first-panel").classList.remove("highlight");
+    document.getElementById("explanation-second-third-panel").classList.remove("highlight");
+    document.getElementById("explanation-third-panel").classList.remove("highlight");
 
-        window.onload = init;
+    // Reset animation part visibility or opacity
+    if (firstPanel) firstPanel.material.opacity = 0.3; // Reset opacity to original state
+    if (secondPanel) secondPanel.material.opacity = 0.3;
+    if (thirdPanel) thirdPanel.material.opacity = 0.3;
+}
+
+function toggleExplanation() {
+    const explanationBox = document.getElementById("explanation-box");
+    if (explanationBox.style.display === "none" || explanationBox.style.display === "") {
+        explanationBox.style.display = "block";
+    } else {
+        explanationBox.style.display = "none";
+        resetHighlights(); // Reset highlights when the explanation box is closed
+    }
+}
+
+window.onload = function() {
+    init();
+    // Ensure the panels and necessary variables are initialized
+    if (typeof firstPanel === "undefined") {
+        console.error("First panel is not initialized.");
+    }
+    if (typeof secondPanel === "undefined") {
+        console.error("Second panel is not initialized.");
+    }
+    if (typeof thirdPanel === "undefined") {
+        console.error("Third panel is not initialized.");
+    }
+};
     </script>
 </body>
 </html>

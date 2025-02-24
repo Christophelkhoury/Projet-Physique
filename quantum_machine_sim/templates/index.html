@@ -16,7 +16,18 @@
         }
         .controls { top: 10px; left: 10px; }
         .timeline { bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
-        .timeline div { padding: 5px 10px; border: 1px solid black; border-radius: 5px; font-weight: bold; }
+        .timeline div { 
+            padding: 5px 10px; 
+            border: 1px solid black; 
+            border-radius: 5px; 
+            font-weight: bold;
+            transition: background-color 0.5s, color 0.5s; /* Add smooth transition effect */
+        }
+        .timeline div.active {
+            background-color: #ffcc00; /* Highlighted color */
+            color: black;
+            box-shadow: 0 0 10px #ffcc00; /* Add glow effect */
+        }
         .equations { top: 10px; right: 10px; font-weight: bold; font-size: 18px; }
         .graph { bottom: 10px; right: 10px; width: 300px; height: 150px; border: 1px solid black; display: block; }
         .annotations { top: 50px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: bold; }
@@ -84,6 +95,13 @@
             font-size: 18px; /* Bigger buttons */
             padding: 10px 20px; /* More padding */
         }
+        /* Added styles for time label */
+        .time-label {
+            padding: 5px 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #000;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -122,14 +140,17 @@
     <em style="font-size: 16px; color: red; font-weight: bold;">Note: Click on the text to highlight the corresponding part of the machine.</em><br><br>
     <strong style="font-size: 18px;">Towards a More Efficient Solar Panel Thanks to Quantum Physics</strong><br><br>
     <ul style="font-size: 16px;">
-        <li id="explanation-empty-space" onclick="highlightPart('empty-space')"><strong>Empty Space (Before the First Panel) – Schrödinger’s Superposition</strong><br>
+        <li id="explanation-empty-space" onclick="highlightPart('empty-space')"><strong>Empty Space (Before the First Panel) – Schrödinger's Superposition</strong><br>
             Before reaching any physical barrier, photons exist in a superposition state, meaning they have the potential to take multiple paths at once. Their behavior remains undefined until they interact with the system.
         </li><br>
-        <li id="explanation-first-panel" onclick="highlightPart('first-panel')"><strong>First Panel (Metal with Two Slits) – Quantum Measurement Effect</strong><br>
+        <li id="explanation-first-panel" onclick="highlightPart('first-panel')">
+            <strong>First Panel (Metal with Two Slits) – Quantum Measurement Effect</strong><br>
             <em>Without Observation:</em> Photons pass through both slits simultaneously as waves, forming an interference pattern beyond this panel.<br>
-            <em>With Observation:</em> Photons act as particles, traveling through one slit only, preventing interference.
-        </li><br>
-        <li id="explanation-second-third-panel" onclick="highlightPart('second-third-panel')"><strong>Space Between the Second and Third Panel – Young’s Interference Theory</strong><br>
+            <em>With Observation:</em> Photons act as particles, traveling through one slit only, preventing interference.<br>
+            <em>Note:</em> An observer in quantum mechanics refers to any measurement device or conscious entity that interacts with the system, collapsing the wave function into a definite state.
+        </li>
+        <br>
+        <li id="explanation-second-third-panel" onclick="highlightPart('second-third-panel')"><strong>Space Between the Second and Third Panel – Young's Interference Theory</strong><br>
             <em>Without Observation:</em> The interference pattern spreads across this space, causing light redistribution, concentrating photons in specific regions before they reach the semiconductor.<br>
             <em>With Observation:</em> The photons travel in straight, separate trajectories, arriving at the semiconductor panel without interference effects.
         </li><br>
@@ -156,93 +177,88 @@
         let firstPanel, secondPanel, thirdPanel;
         
         function init() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-            // Create a box divided into three parts
-            const boxGeometry = new THREE.BoxGeometry(10, 3, 1); // Adjusted width
-            const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, wireframe: true });
-            box = new THREE.Mesh(boxGeometry, boxMaterial);
-            scene.add(box);
+    // Create a box divided into three parts
+    const boxGeometry = new THREE.BoxGeometry(10, 3, 1); // Adjusted width
+    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, wireframe: true });
+    box = new THREE.Mesh(boxGeometry, boxMaterial);
+    scene.add(box);
 
-            // Create the first panel with no slits (will have rectangular holes)
-            const firstPanelGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Panel size
-            const firstPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 }); // Changed to white
-            firstPanel = new THREE.Mesh(firstPanelGeometry, firstPanelMaterial);
-            firstPanel.position.set(-5, 0, 0); // Move the first panel
-            scene.add(firstPanel);
+    // Create the first panel with no slits (will have rectangular holes)
+    const firstPanelGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Panel size
+    const firstPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 }); // Changed to white
+    firstPanel = new THREE.Mesh(firstPanelGeometry, firstPanelMaterial);
+    firstPanel.position.set(-5, 0, 0); // Move the first panel
+    scene.add(firstPanel);
 
-            // Create the second divider with two rectangular holes
-            const secondPanelGeometry = new THREE.BoxGeometry(0.3, 3, 1); // Wider divider size
-            const secondPanelMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
-            secondPanel = new THREE.Mesh(secondPanelGeometry, secondPanelMaterial);
-            secondPanel.position.set(-2, 0, 0); // Move the second divider to the left
-            scene.add(secondPanel);
+    // Create the second divider with two rectangular holes
+    const secondPanelGeometry = new THREE.BoxGeometry(0.3, 3, 1); // Wider divider size
+    const secondPanelMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
+    secondPanel = new THREE.Mesh(secondPanelGeometry, secondPanelMaterial);
+    secondPanel.position.set(-2, 0, 0); // Move the second divider to the left
+    scene.add(secondPanel);
 
-            // Create the two rectangular holes with white borders
-            const holeGeometry = new THREE.BoxGeometry(0.6, 0.1, 1); // Less wide horizontal hole size (wider in x, thinner in y)
-            const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 1 });
-            
-            const hole1 = new THREE.Mesh(holeGeometry, holeMaterial);
-            const hole2 = new THREE.Mesh(holeGeometry, holeMaterial);
-            
-            // Position holes horizontally, spaced equally
-            hole1.position.set(-2, 0.5, 0); // Upper hole
-            hole2.position.set(-2, -0.5, 0); // Lower hole
-            
-            scene.add(hole1);
-            scene.add(hole2);
-            
-            // Create white border effect for the holes
-            const borderGeometry = new THREE.BoxGeometry(0.7, 0.2, 1); // Border size
-            const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White border
-            
-            const border1 = new THREE.Mesh(borderGeometry, borderMaterial);
-            const border2 = new THREE.Mesh(borderGeometry, borderMaterial);
-            
-            // Position the borders around the holes
-            border1.position.set(-2, 0.5, 0); 
-            border2.position.set(-2, -0.5, 0);
-            scene.add(border1);
-            scene.add(border2);
+    // Create the two rectangular holes with same width as second panel
+    const holeGeometry = new THREE.BoxGeometry(0.3, 0.1, 1); // Width now matches second panel, height stays the same
+    const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 1 });
 
-            // Create the third divider (no holes) with a different color and wider size
-            const thirdPanelGeometry = new THREE.BoxGeometry(0.4, 3, 1); // Wider divider size
-            const thirdPanelMaterial = new THREE.MeshBasicMaterial({ color:0xffffff, transparent: true, opacity: 0.3 }); // Changed to white
-            thirdPanel = new THREE.Mesh(thirdPanelGeometry, thirdPanelMaterial);
-            thirdPanel.position.set(1.33, 0, 0); // Move the third divider to the left
-            scene.add(thirdPanel);
+    const hole1 = new THREE.Mesh(holeGeometry, holeMaterial);
+    const hole2 = new THREE.Mesh(holeGeometry, holeMaterial);
 
-            // Create light beam (adjust the position)
-            const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 5, 32);
-            const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
-            lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
-            lightBeam.rotation.z = Math.PI / 2;
-            lightBeam.position.set(-5, 0, 0); // Adjusted position
-            scene.add(lightBeam);
+    // Position holes horizontally, spaced equally
+    hole1.position.set(-2, 0.5, 0); // Upper hole
+    hole2.position.set(-2, -0.5, 0); // Lower hole
 
-            // Add numbers above the panels
-            addNumber(-5, 2, "1");
-            addNumber(-2, 2, "2");
-            addNumber(1.33, 2, "3");
-            addNumber(4, 2, "4");
+    scene.add(hole1);
+    scene.add(hole2);
 
-            // Setup canvas for energy graph
-            energyGraphCtx = document.getElementById("graph").getContext("2d");
-            energyGraphCtx.clearRect(0, 0, 300, 150); // Clear previous drawings
+    // Create white border effect for the holes
+    const borderGeometry = new THREE.BoxGeometry(0.35, 0.2, 1); // Width slightly larger for the white border
+    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White border
 
-            // Draw initial axis labels only once
-            energyGraphCtx.font = "12px Arial";
-            energyGraphCtx.fillText("Energy", 10, 10); // Y-axis label
-            energyGraphCtx.fillText("Time", 230, 140); // X-axis label
-            energyGraphCtx.fillText("Speed", 230, 20); // Speed label near the top
+    const border1 = new THREE.Mesh(borderGeometry, borderMaterial);
+    const border2 = new THREE.Mesh(borderGeometry, borderMaterial);
 
-            camera.position.z = 5;
-            animate();
-        }
+    // Position the borders around the holes
+    border1.position.set(-2, 0.5, 0);
+    border2.position.set(-2, -0.5, 0);
+    scene.add(border1);
+    scene.add(border2);
+
+    // Create the third divider (no holes) with a different color and wider size
+    const thirdPanelGeometry = new THREE.BoxGeometry(0.4, 3, 1); // Wider divider size
+    const thirdPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }); // Changed to white
+    thirdPanel = new THREE.Mesh(thirdPanelGeometry, thirdPanelMaterial);
+    thirdPanel.position.set(1.33, 0, 0); // Move the third divider to the left
+    scene.add(thirdPanel);
+
+    // Create light beam (adjust the position)
+    const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 5, 32);
+    const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
+    lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
+    lightBeam.rotation.z = Math.PI / 2;
+    lightBeam.position.set(-5, 0, 0); // Adjusted position
+    scene.add(lightBeam);
+
+    // Add numbers above the panels
+    addNumber(-5, 2, "1");
+    addNumber(-2, 2, "2");
+    addNumber(1.33, 2, "3");
+    addNumber(4, 2, "4");
+
+    // Setup canvas for energy graph
+    energyGraphCtx = document.getElementById("graph").getContext("2d");
+    energyGraphCtx.clearRect(0, 0, 300, 150); // Clear previous drawings
+    camera.position.z = 5;
+    animate();
+}
+
+
 
         function addNumber(x, y, text) {
             const loader = new THREE.FontLoader();
@@ -275,25 +291,38 @@
             energyGraphCtx.clearRect(0, 0, 300, 150); // Clear the graph
             graphX = 0;
             graphY = 0;
-
-            // Redraw initial axis labels
-            energyGraphCtx.font = "12px Arial";
-            energyGraphCtx.fillText("Energy", 10, 10); // Y-axis label
-            energyGraphCtx.fillText("Time", 230, 140); // X-axis label
-            energyGraphCtx.fillText("Speed", 230, 20); // Speed label near the top
+            
+            // Reset timeline highlights
+            document.getElementById("stage1").classList.remove("active");
+            document.getElementById("stage2").classList.remove("active");
+            document.getElementById("stage3").classList.remove("active");
+            
+            // Remove any existing percentage popups
+            const popups = document.querySelectorAll('.energy-popup');
+            popups.forEach(popup => popup.remove());
         }
 
         function startExperiment() {
             resetExperiment(); // Reset everything before starting the experiment
             document.querySelector(".graph").style.display = "block"; // Show graph when experiment starts
+            
+            // Highlight first stage
+            highlightTimelineStage("stage1");
+            
             updateEquations("Schrödinger's Equation: Ψ(x,t) = A * exp(i(kx - ωt))");
             updateAnnotations("Schrödinger's Equation Determines Path Probability");
             gsap.to(lightBeam.position, { x: -2, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+                // Highlight second stage
+                highlightTimelineStage("stage2");
+                
                 updateEquations("Young's Double-Slit: I(x) = I0 * cos²(π * x / λ)");
                 updateAnnotations("Young's Double-Slit Experiment - Light Interference");
                 showPhotons(); // Show photons gradually as beam moves
                 if (!graphStarted) startGraph(); // Start drawing the graph once the experiment begins
                 gsap.to(lightBeam.position, { x: 1.33, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+                    // Highlight third stage
+                    highlightTimelineStage("stage3");
+                    
                     updateEquations("Electron Absorption: E = hν + ½mv²");
                     updateAnnotations("Electron Absorption - Energy Gain");
                     showElectrons(); // Show electrons after photon interaction
@@ -304,11 +333,147 @@
                 }}); 
             }}); 
         }
+        
+        // Function to highlight timeline stages
+        function highlightTimelineStage(stageId) {
+            // Remove active class from all timeline stages
+            document.getElementById("stage1").classList.remove("active");
+            document.getElementById("stage2").classList.remove("active");
+            document.getElementById("stage3").classList.remove("active");
+            
+            // Add active class to the current stage
+            document.getElementById(stageId).classList.add("active");
+        }
 
         function startGraph() {
-            graphStarted = true;
-            updateEnergyGraph(5); // Start the graph drawing on first step
-        }
+    graphStarted = true;
+    
+    // Clear and set up the graph with proper axes
+    energyGraphCtx.clearRect(0, 0, 300, 150);
+    
+    // Draw axes with bolder lines
+    energyGraphCtx.beginPath();
+    energyGraphCtx.moveTo(40, 120);
+    energyGraphCtx.lineTo(280, 120);
+    energyGraphCtx.moveTo(40, 120);
+    energyGraphCtx.lineTo(40, 20);
+    energyGraphCtx.strokeStyle = '#000000';
+    energyGraphCtx.lineWidth = 3;
+    energyGraphCtx.stroke();
+    
+    // Draw axis labels with better positioning and larger font
+    energyGraphCtx.font = "bold 16px Arial";
+    energyGraphCtx.fillStyle = "#000000";
+    
+    // Adjusted label positions
+    energyGraphCtx.fillText("Energy", 5, 15);  // Moved higher
+    energyGraphCtx.fillText("Speed", 70, 15);  // Moved higher
+    
+    // Draw Time text with a frame/border around it
+    const timeText = "Time";
+    energyGraphCtx.save();
+    const timeTextWidth = energyGraphCtx.measureText(timeText).width;
+    energyGraphCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    energyGraphCtx.fillRect(250, 125, timeTextWidth + 10, 24); // Moved left
+    energyGraphCtx.strokeStyle = "#000000";
+    energyGraphCtx.lineWidth = 1.5;
+    energyGraphCtx.strokeRect(250, 125, timeTextWidth + 10, 24);
+    energyGraphCtx.fillStyle = "#000000";
+    energyGraphCtx.fillText(timeText, 255, 142); // Adjusted position
+    energyGraphCtx.restore();
+    
+    // Reset graph position for new data
+    graphX = 40;  // Start at the origin of our axes
+    graphY = 120;
+}
+
+function updateEnergyGraph(energy) {
+    if (!graphStarted) return;
+    
+    const maxEnergy = 100;
+    const energyPercentage = Math.min(Math.round((energy / maxEnergy) * 100), 100);
+    const speedPercentage = Math.min(Math.round((energy / maxEnergy) * 90 + 10), 100);
+    
+    energyGraphCtx.beginPath();
+    energyGraphCtx.moveTo(graphX, graphY);
+    
+    graphX += 15;
+    
+    const progress = Math.min((graphX - 40) / 240, 1);
+    const exponent = 1.8;
+    const exponentialValue = Math.pow(progress, exponent);
+    
+    graphY = 120 - (100 * exponentialValue);
+    
+    energyGraphCtx.lineTo(graphX, graphY);
+    energyGraphCtx.strokeStyle = '#ff0000';
+    energyGraphCtx.lineWidth = 8;
+    energyGraphCtx.stroke();
+    
+    energyGraphCtx.beginPath();
+    energyGraphCtx.arc(graphX, graphY, 6, 0, Math.PI * 2);
+    energyGraphCtx.fillStyle = '#ff0000';
+    energyGraphCtx.fill();
+    
+    energyGraphCtx.beginPath();
+    energyGraphCtx.arc(graphX, graphY, 8, 0, Math.PI * 2);
+    energyGraphCtx.strokeStyle = '#ff6666';
+    energyGraphCtx.lineWidth = 2;
+    energyGraphCtx.stroke();
+    
+    if (progress > 0.4) {
+        showPercentagePopup(energyPercentage, speedPercentage);
+    }
+    
+    if (graphX > 100) {
+        energyGraphCtx.font = "bold 14px Arial";
+        energyGraphCtx.fillStyle = "#000000";
+        energyGraphCtx.fillText(`${energyPercentage}%`, graphX + 10, graphY);
+    }
+    
+    if (graphX >= 280) {
+        energyGraphCtx.beginPath();
+        energyGraphCtx.moveTo(graphX, graphY);
+        energyGraphCtx.lineTo(300, graphY);
+        energyGraphCtx.strokeStyle = '#ff0000';
+        energyGraphCtx.lineWidth = 8;
+        energyGraphCtx.stroke();
+    }
+}
+
+function showPercentagePopup(energyPercentage, speedPercentage) {
+    document.querySelectorAll('.energy-popup').forEach(popup => popup.remove());
+    
+    const popup = document.createElement('div');
+    popup.className = 'energy-popup';
+    popup.style.position = 'absolute';
+    popup.style.right = '20px';
+    popup.style.bottom = '170px';
+    popup.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+    popup.style.border = '4px solid #ff0000';
+    popup.style.borderRadius = '10px';
+    popup.style.padding = '20px';
+    popup.style.zIndex = '1000';
+    popup.style.fontWeight = 'bold';
+    popup.style.fontSize = '18px';
+    popup.style.boxShadow = '0 0 20px rgba(255,0,0,0.8)';
+    popup.style.minWidth = '180px';
+    popup.style.opacity = '0';
+    
+    popup.innerHTML = `
+        <div style="color: #ff0000; font-size: 22px; margin-bottom: 12px; text-align: center;">EFFICIENCY GAINS</div>
+        <div style="font-size: 20px; margin-bottom: 8px;">Energy: <span style="color: #ff0000; font-size: 24px;">${energyPercentage}%</span></div>
+        <div style="font-size: 20px;">Speed: <span style="color: #ff0000; font-size: 24px;">${speedPercentage}%</span></div>
+    `;
+    
+    document.body.appendChild(popup);
+    
+    setTimeout(() => {
+        popup.style.transition = 'opacity 0.5s, transform 0.5s, box-shadow 1s';
+        popup.style.opacity = '1';
+    }, 100);
+}
+
 
         function showPhotons() {
             // Gradually show photons (with observer behavior)
@@ -334,7 +499,7 @@
 
         function showElectrons() {
             // Gradually show electrons (with observer behavior)
-            for (let i = -0.5; i <= 0.5; i += 0.05) {
+            for (let i = -0.5; i <= 0.5; i += 0.1) {
                 setTimeout(() => {
                     const dotGeometry = new THREE.SphereGeometry(0.025, 32, 32);
                     const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
@@ -399,7 +564,7 @@
         case "empty-space":
             document.getElementById("explanation-empty-space").classList.add("highlight");
             if (firstPanel) firstPanel.material.opacity = 1; // Highlighting the first panel (empty space)
-            updateAnnotations("Empty Space (Before the First Panel) - Schrödinger’s Superposition");
+            updateAnnotations("Empty Space (Before the First Panel) - Schrödinger's Superposition");
             break;
         case "first-panel":
             document.getElementById("explanation-first-panel").classList.add("highlight");
@@ -410,7 +575,7 @@
             document.getElementById("explanation-second-third-panel").classList.add("highlight");
             if (secondPanel) secondPanel.material.opacity = 1; // Highlight second panel
             if (thirdPanel) thirdPanel.material.opacity = 1; // Highlight the third panel
-            updateAnnotations("Space Between the Second and Third Panel - Young’s Interference Theory");
+            updateAnnotations("Space Between the Second and Third Panel - Young's Interference Theory");
             break;
         case "third-panel":
             document.getElementById("explanation-third-panel").classList.add("highlight");

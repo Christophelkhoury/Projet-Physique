@@ -1,626 +1,647 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Machine Simulation</title>
-    <style>
-        body { margin: 0; overflow: hidden; text-align: center; font-family: Arial, sans-serif; }
-        canvas { display: block; }
-        .controls, .timeline, .equations, .graph, .annotations, .observer-controls {
-            position: absolute;
-            z-index: 10;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        .controls { top: 10px; left: 10px; }
-        .timeline { bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
-        .timeline div { 
-            padding: 5px 10px; 
-            border: 1px solid black; 
-            border-radius: 5px; 
-            font-weight: bold;
-            transition: background-color 0.5s, color 0.5s; /* Add smooth transition effect */
-        }
-        .timeline div.active {
-            background-color: #ffcc00; /* Highlighted color */
-            color: black;
-            box-shadow: 0 0 10px #ffcc00; /* Add glow effect */
-        }
-        .equations { top: 10px; right: 10px; font-weight: bold; font-size: 18px; }
-        .graph { bottom: 10px; right: 10px; width: 300px; height: 150px; border: 1px solid black; display: block; }
-        .annotations { top: 50px; left: 50%; transform: translateX(-50%); font-size: 18px; font-weight: bold; }
-        .observer-controls { top: 90px; left: 10px; }
-        #observer-checkbox { margin-right: 5px; }
-        .speed-slider { margin-top: 10px; }
-        .info-button, .info-button-2 {
-            position: absolute;
-            bottom: 190px; /* Adjusted to be at the same level as the top of the graph */
-            background: rgba(255, 255, 255, 0.8);
-            padding: 5px;
-            border-radius: 5px;
-            font-size: 12px;
-            cursor: pointer;
-            border: 1px solid black;
-        }
-        .info-button { left: 39%; transform: translateX(-50%); }
-        .info-button-2 { left: 26%; transform: translateX(-50%); } /* Adjusted position */
-        .info-box, .info-box-2 {
-            display: none;
-            position: absolute;
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid black;
-            width: 250px;
-            text-align: left;
-            font-size: 12px; /* Smaller text */
-        }
-        .info-box { bottom: 70px; left: 50%; transform: translateX(-50%); }
-        .info-box-2 { bottom: 0%; left: 15%; transform: translateX(-50%); } /* Moved towards the bottom */
-        .explanation-button {
-            position: absolute;
-            bottom: 0px; /* Adjusted to be at the same level as the top of the graph */
-            left: 5%; /* Moved more to the left */
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.8);
-            padding: 20px; /* Made the button bigger */
-            border-radius: 5px;
-            font-size: 20px; /* Increased font size */
-            cursor: pointer;
-            border: 1px solid black;
-        }
-
-        .explanation-box {
-            display: none;
-            position: absolute;
-            top: 0; /* Take up the whole height from top */
-            bottom: 0; /* to bottom */
-            right: 0; /* Positioned on the right */
-            width: 25%; /* Width about a fourth of the page */
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid black;
-            text-align: left;
-            font-size: 16px; /* Larger text */
-            overflow-y: auto; /* Add scroll if content overflows */
-            z-index: 20; /* Ensure it covers other elements */
-        }
-        .highlight {
-            background-color: yellow; /* Highlight color */
-        }
-        .controls button {
-            font-size: 18px; /* Bigger buttons */
-            padding: 10px 20px; /* More padding */
-        }
-        /* Added styles for time label */
-        .time-label {
-            padding: 5px 10px;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid #000;
-            border-radius: 4px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantum Machine Simulation</title>
+  <!-- Import Google Font for a modern look -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap" rel="stylesheet">
+  <style>
+    /* Base Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f2f5;
+      font-family: 'Roboto', sans-serif;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+    
+    /* Header (Primary Controls) with Blue Gradient Buttons */
+    header.controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 12px 16px;
+      z-index: 10;
+    }
+    header.controls button {
+      background: linear-gradient(135deg, #2196F3, #21CBF3);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: background 0.3s, transform 0.3s;
+    }
+    header.controls button:hover {
+      background: linear-gradient(135deg, #21CBF3, #2196F3);
+      transform: scale(1.05);
+    }
+    
+    /* Observer Controls (Top Right) - Modern toggle switch with bigger text */
+    section.observer-controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid #e52e71;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      padding: 12px 16px;
+      z-index: 10;
+      text-align: right;
+    }
+    section.observer-controls label {
+      font-size: 18px;
+      margin-right: 8px;
+      font-weight: bold;
+      color: #333;
+    }
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      vertical-align: middle;
+    }
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #e52e71;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    /* Range input (unchanged) */
+    section.observer-controls input[type="range"] {
+      cursor: pointer;
+      width: 100px;
+      margin-top: 4px;
+    }
+    
+    /* Equations Display (Centered at Top) - Modernized and more obvious */
+    .equations {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #ffffff, #e8e8e8);
+      border: 2px solid #ccc;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 10;
+      color: #333;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* Timeline Navigation (Bottom Center) */
+    nav.timeline {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 10px 16px;
+      display: flex;
+      gap: 16px;
+      z-index: 10;
+    }
+    nav.timeline div {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+    @keyframes flow {
+      0% { background-color: #007BFF; }
+      50% { background-color: #00D4FF; }
+      100% { background-color: #007BFF; }
+    }
+    nav.timeline div.active {
+      animation: flow 3s infinite;
+      color: #fff;
+      border-color: #007BFF;
+    }
+    
+    /* Energy Graph - Bottom Right */
+    .graph {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      width: 300px;
+      height: 150px;
+      border: 1px solid black;
+      background: #fff;
+      display: block;
+      z-index: 10;
+    }
+    
+    /* Annotations (Center-Top, below equations) - Modernized */
+    .annotations {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: linear-gradient(135deg, #ffffff, #dcdcdc);
+      border: 2px solid #bbb;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-size: 18px;
+      font-weight: 500;
+      z-index: 10;
+      color: #333;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Explanation Button (Bottom Left) */
+    .explanation-button {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: linear-gradient(135deg, #ff8a00, #e52e71);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 20px 30px;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .explanation-button:hover {
+      background: linear-gradient(135deg, #e52e71, #ff8a00);
+      transform: scale(1.05);
+    }
+    
+    /* Explanation Box with enhanced text spacing */
+    .explanation-box {
+      display: none;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 25%;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid #000;
+      text-align: left;
+      font-size: 16px;
+      overflow-y: auto;
+      z-index: 20;
+      line-height: 1.6;
+      word-spacing: 1px;
+    }
+    
+    /* Modern highlight effect for explanation text */
+    .highlight {
+      border: 2px solid #e52e71;
+      border-radius: 8px;
+      padding: 8px;
+      background-color: #fff3e0;
+      box-shadow: 0 0 10px rgba(229,46,113,0.5);
+      transition: all 0.3s ease;
+    }
+    .explanation-box ul {
+      list-style: none;
+      padding: 0;
+    }
+    .explanation-box li {
+      margin-bottom: 16px;
+      cursor: pointer;
+      padding: 8px;
+      transition: background-color 0.3s;
+    }
+    .explanation-box li:hover {
+      background-color: #f9f9f9;
+    }
+  </style>
 </head>
 <body>
-    <div class="controls">
-        <button onclick="startExperiment()">Start Experiment</button>
-        <button onclick="rotateView()">Rotate View</button>
-    </div>
-
-    <div class="observer-controls">
-        <label for="observer-checkbox">Observer:</label>
-        <input type="checkbox" id="observer-checkbox" onchange="toggleObserver()">
-        <br>
-        <label for="speed-slider">Animation Speed:</label>
-        <input type="range" id="speed-slider" class="speed-slider" min="3" max="3.5" step="0.1" value="3" onchange="updateAnimationSpeed(this.value)">
-    </div>
-
-    <div class="timeline" id="timeline">
-        <div id="stage1">Schrödinger's Cat</div>
-        <div id="stage2">Young's Double-Slit</div>
-        <div id="stage3">Electron Absorption</div>
-    </div>
-
-    <div class="equations" id="equations">Equation: N/A</div>
-    <canvas class="graph" id="graph"></canvas>
-    <div class="annotations" id="annotations">
-        <strong>This is an improved version of a solar panel</strong><br>
-        Welcome to the Quantum Experiment
-    </div>
-    <div class="panel-number" style="position: absolute; top: 20px; left: 20%; font-size: 24px; font-weight: bold;">1</div>
-    <div class="panel-number" style="position: absolute; top: 20px; left: 40%; font-size: 24px; font-weight: bold;">2</div>
-    <div class="panel-number" style="position: absolute; top: 20px; left: 60%; font-size: 24px; font-weight: bold;">3</div>
-    <div class="panel-number" style="position: absolute; top: 20px; left: 80%; font-size: 24px; font-weight: bold;">4</div>
-
-    <div class="explanation-button" id="explanation-button" onclick="toggleExplanation()">Explanation</div>
-    <div class="explanation-box" id="explanation-box">
+  <header class="controls">
+    <button onclick="startExperiment()" title="Start the experiment">Start Experiment</button>
+    <button onclick="rotateView()" title="Rotate the view">Rotate View</button>
+  </header>
+  
+  <section class="observer-controls">
+    <label for="observer-checkbox" title="Toggle observer effect">Observer:</label>
+    <!-- Modern toggle switch -->
+    <label class="switch">
+      <input type="checkbox" id="observer-checkbox" onchange="toggleObserver()">
+      <span class="slider"></span>
+    </label>
+    <br>
+    <label for="speed-slider" title="Adjust animation speed">Animation Speed:</label>
+    <input type="range" id="speed-slider" min="3" max="3.5" step="0.1" value="3" onchange="updateAnimationSpeed(this.value)">
+  </section>
+  
+  <div class="equations" id="equations">Equation: N/A</div>
+  
+  <nav class="timeline" id="timeline">
+    <div id="stage1" title="Schrödinger's Cat Stage">Schrödinger's Cat</div>
+    <div id="stage2" title="Young's Double-Slit Stage">Young's Double-Slit</div>
+    <div id="stage3" title="Electron Absorption Stage">Electron Absorption</div>
+  </nav>
+  
+  <canvas class="graph" id="graph"></canvas>
+  
+  <div class="annotations" id="annotations">
+    <strong>Quantum Experiment Simulation</strong><br>
+    Explore the phenomena of quantum mechanics.
+  </div>
+  
+  <button class="explanation-button" id="explanation-button" onclick="toggleExplanation()" title="Show explanation">Explanation</button>
+  
+  <div class="explanation-box" id="explanation-box">
     <em style="font-size: 16px; color: red; font-weight: bold;">Note: Click on the text to highlight the corresponding part of the machine.</em><br><br>
     <strong style="font-size: 18px;">Towards a More Efficient Solar Panel Thanks to Quantum Physics</strong><br><br>
     <ul style="font-size: 16px;">
-        <li id="explanation-empty-space" onclick="highlightPart('empty-space')"><strong>Empty Space (Before the First Panel) – Schrödinger's Superposition</strong><br>
-            Before reaching any physical barrier, photons exist in a superposition state, meaning they have the potential to take multiple paths at once. Their behavior remains undefined until they interact with the system.
-        </li><br>
-        <li id="explanation-first-panel" onclick="highlightPart('first-panel')">
-            <strong>First Panel (Metal with Two Slits) – Quantum Measurement Effect</strong><br>
-            <em>Without Observation:</em> Photons pass through both slits simultaneously as waves, forming an interference pattern beyond this panel.<br>
-            <em>With Observation:</em> Photons act as particles, traveling through one slit only, preventing interference.<br>
-            <em>Note:</em> An observer in quantum mechanics refers to any measurement device or conscious entity that interacts with the system, collapsing the wave function into a definite state.
-        </li>
-        <br>
-        <li id="explanation-second-third-panel" onclick="highlightPart('second-third-panel')"><strong>Space Between the Second and Third Panel – Young's Interference Theory</strong><br>
-            <em>Without Observation:</em> The interference pattern spreads across this space, causing light redistribution, concentrating photons in specific regions before they reach the semiconductor.<br>
-            <em>With Observation:</em> The photons travel in straight, separate trajectories, arriving at the semiconductor panel without interference effects.
-        </li><br>
-        <li id="explanation-third-panel" onclick="highlightPart('third-panel')"><strong>Third Panel (Semiconductor – Silicon) – Electron Absorption and Energy Conversion</strong><br>
-            Here, electrons absorb photons, gaining energy and increasing speed.<br>
-            The amount of energy gained depends on photon distribution, which is influenced by earlier interference.<br>
-            Efficient absorption leads to higher electricity conversion, making quantum effects crucial to optimizing energy output.
-        </li><br>
+      <li id="explanation-empty-space" onclick="highlightPart('empty-space')">
+        <strong>Empty Space (Before the First Panel) – Schrödinger's Superposition</strong><br>
+        Before reaching any physical barrier, photons exist in a superposition state, meaning they have the potential to take multiple paths at once. Their behavior remains undefined until they interact with the system.
+      </li>
+      <li id="explanation-first-panel" onclick="highlightPart('first-panel')">
+        <strong>First Panel (Metal with Two Slits) – Quantum Measurement Effect</strong><br>
+        <em>Without Observation:</em> Photons pass through both slits simultaneously as waves, forming an interference pattern beyond this panel.<br>
+        <em>With Observation:</em> Photons act as particles, traveling through one slit only, preventing interference.<br>
+        <em>Note:</em> An observer in quantum mechanics refers to any measurement device or conscious entity that interacts with the system, collapsing the wave function into a definite state.
+      </li>
+      <li id="explanation-second-third-panel" onclick="highlightPart('second-third-panel')">
+        <strong>Space Between the Second and Third Panel – Young's Interference Theory</strong><br>
+        <em>Without Observation:</em> The interference pattern spreads across this space, causing light redistribution, concentrating photons in specific regions before they reach the semiconductor.<br>
+        <em>With Observation:</em> The photons travel in straight, separate trajectories, arriving at the semiconductor panel without interference effects.
+      </li>
+      <li id="explanation-third-panel" onclick="highlightPart('third-panel')">
+        <strong>Third Panel (Semiconductor – Silicon) – Electron Absorption and Energy Conversion</strong><br>
+        Here, electrons absorb photons, gaining energy and increasing speed.<br>
+        The amount of energy gained depends on photon distribution, which is influenced by earlier interference.<br>
+        Efficient absorption leads to higher electricity conversion, making quantum effects crucial to optimizing energy output.
+      </li>
     </ul>
     <strong>Conclusion</strong><br>
     By leveraging quantum effects at different stages, light absorption and energy conversion can be optimized. Understanding and controlling these phenomena may lead to more efficient solar panels in the future.
-</div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script>
-        let scene, camera, renderer, lightBeam, box, slitPanel, semiconductor;
-        let stageIndex = 0, viewAngle = 0, energyGraphCtx, graphX = 0, graphY = 0;
-        let photons = [];  // To store the photon objects
-        let electrons = []; // To store the electron objects
-        let graphStarted = false; // Track when the graph starts
-        let animationSpeed = 2; // Default animation speed (set to 0.25)
-        let observerPresent = false; // Toggle for observer presence (false by default)
-        let firstPanel, secondPanel, thirdPanel;
-        
-        function init() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // Create a box divided into three parts
-    const boxGeometry = new THREE.BoxGeometry(10, 3, 1); // Adjusted width
-    const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, wireframe: true });
-    box = new THREE.Mesh(boxGeometry, boxMaterial);
-    scene.add(box);
-
-    // Create the first panel with no slits (will have rectangular holes)
-    const firstPanelGeometry = new THREE.BoxGeometry(0.1, 3, 1); // Panel size
-    const firstPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 }); // Changed to white
-    firstPanel = new THREE.Mesh(firstPanelGeometry, firstPanelMaterial);
-    firstPanel.position.set(-5, 0, 0); // Move the first panel
-    scene.add(firstPanel);
-
-    // Create the second divider with two rectangular holes
-    const secondPanelGeometry = new THREE.BoxGeometry(0.3, 3, 1); // Wider divider size
-    const secondPanelMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
-    secondPanel = new THREE.Mesh(secondPanelGeometry, secondPanelMaterial);
-    secondPanel.position.set(-2, 0, 0); // Move the second divider to the left
-    scene.add(secondPanel);
-
-    // Create the two rectangular holes with same width as second panel
-    const holeGeometry = new THREE.BoxGeometry(0.3, 0.1, 1); // Width now matches second panel, height stays the same
-    const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 1 });
-
-    const hole1 = new THREE.Mesh(holeGeometry, holeMaterial);
-    const hole2 = new THREE.Mesh(holeGeometry, holeMaterial);
-
-    // Position holes horizontally, spaced equally
-    hole1.position.set(-2, 0.5, 0); // Upper hole
-    hole2.position.set(-2, -0.5, 0); // Lower hole
-
-    scene.add(hole1);
-    scene.add(hole2);
-
-    // Create white border effect for the holes
-    const borderGeometry = new THREE.BoxGeometry(0.35, 0.2, 1); // Width slightly larger for the white border
-    const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff }); // White border
-
-    const border1 = new THREE.Mesh(borderGeometry, borderMaterial);
-    const border2 = new THREE.Mesh(borderGeometry, borderMaterial);
-
-    // Position the borders around the holes
-    border1.position.set(-2, 0.5, 0);
-    border2.position.set(-2, -0.5, 0);
-    scene.add(border1);
-    scene.add(border2);
-
-    // Create the third divider (no holes) with a different color and wider size
-    const thirdPanelGeometry = new THREE.BoxGeometry(0.4, 3, 1); // Wider divider size
-    const thirdPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 }); // Changed to white
-    thirdPanel = new THREE.Mesh(thirdPanelGeometry, thirdPanelMaterial);
-    thirdPanel.position.set(1.33, 0, 0); // Move the third divider to the left
-    scene.add(thirdPanel);
-
-    // Create light beam (adjust the position)
-    const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 5, 32);
-    const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
-    lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
-    lightBeam.rotation.z = Math.PI / 2;
-    lightBeam.position.set(-5, 0, 0); // Adjusted position
-    scene.add(lightBeam);
-
-    // Add numbers above the panels
-    addNumber(-5, 2, "1");
-    addNumber(-2, 2, "2");
-    addNumber(1.33, 2, "3");
-    addNumber(4, 2, "4");
-
-    // Setup canvas for energy graph
-    energyGraphCtx = document.getElementById("graph").getContext("2d");
-    energyGraphCtx.clearRect(0, 0, 300, 150); // Clear previous drawings
-    camera.position.z = 5;
-    animate();
-}
-
-
-
-        function addNumber(x, y, text) {
-            const loader = new THREE.FontLoader();
-            loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
-                const textGeometry = new THREE.TextGeometry(text, {
-                    font: font,
-                    size: 0.5,
-                    height: 0.1,
-                });
-                const textMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
-                const mesh = new THREE.Mesh(textGeometry, textMaterial);
-                mesh.position.set(x, y, 0);
-                scene.add(mesh);
-            });
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
-        }
-
-        function resetExperiment() {
-            // Reset all elements to their initial positions before starting again
-            lightBeam.position.set(-5, 0, 0); // Reset light beam position
-            photons.forEach(p => scene.remove(p)); // Remove any existing photons
-            electrons.forEach(e => scene.remove(e)); // Remove any existing electrons
-            photons = []; // Reset photon array
-            electrons = []; // Reset electron array
-            graphStarted = false; // Reset graph flag
-            energyGraphCtx.clearRect(0, 0, 300, 150); // Clear the graph
-            graphX = 0;
-            graphY = 0;
-            
-            // Reset timeline highlights
-            document.getElementById("stage1").classList.remove("active");
-            document.getElementById("stage2").classList.remove("active");
-            document.getElementById("stage3").classList.remove("active");
-            
-            // Remove any existing percentage popups
-            const popups = document.querySelectorAll('.energy-popup');
-            popups.forEach(popup => popup.remove());
-        }
-
-        function startExperiment() {
-            resetExperiment(); // Reset everything before starting the experiment
-            document.querySelector(".graph").style.display = "block"; // Show graph when experiment starts
-            
-            // Highlight first stage
-            highlightTimelineStage("stage1");
-            
-            updateEquations("Schrödinger's Equation: Ψ(x,t) = A * exp(i(kx - ωt))");
-            updateAnnotations("Schrödinger's Equation Determines Path Probability");
-            gsap.to(lightBeam.position, { x: -2, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
-                // Highlight second stage
-                highlightTimelineStage("stage2");
-                
-                updateEquations("Young's Double-Slit: I(x) = I0 * cos²(π * x / λ)");
-                updateAnnotations("Young's Double-Slit Experiment - Light Interference");
-                showPhotons(); // Show photons gradually as beam moves
-                if (!graphStarted) startGraph(); // Start drawing the graph once the experiment begins
-                gsap.to(lightBeam.position, { x: 1.33, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
-                    // Highlight third stage
-                    highlightTimelineStage("stage3");
-                    
-                    updateEquations("Electron Absorption: E = hν + ½mv²");
-                    updateAnnotations("Electron Absorption - Energy Gain");
-                    showElectrons(); // Show electrons after photon interaction
-                    gsap.to(lightBeam.position, { x: 4, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
-                        updateEnergyGraph(50); // Update the graph to show energy gain
-                        updateAnnotations("Experiment Complete!"); // Final annotation
-                    }}); 
-                }}); 
-            }}); 
-        }
-        
-        // Function to highlight timeline stages
-        function highlightTimelineStage(stageId) {
-            // Remove active class from all timeline stages
-            document.getElementById("stage1").classList.remove("active");
-            document.getElementById("stage2").classList.remove("active");
-            document.getElementById("stage3").classList.remove("active");
-            
-            // Add active class to the current stage
-            document.getElementById(stageId).classList.add("active");
-        }
-
-        function startGraph() {
-    graphStarted = true;
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script>
+    let scene, camera, renderer, lightBeam, box;
+    let viewAngle = 0, energyGraphCtx, graphX = 40, graphY = 120;
+    let photons = [];
+    let electrons = [];
+    let graphStarted = false;
+    let animationSpeed = 2;
+    let observerPresent = false;
+    let firstPanel, secondPanel, thirdPanel;
     
-    // Clear and set up the graph with proper axes
-    energyGraphCtx.clearRect(0, 0, 300, 150);
-    
-    // Draw axes with bolder lines
-    energyGraphCtx.beginPath();
-    energyGraphCtx.moveTo(40, 120);
-    energyGraphCtx.lineTo(280, 120);
-    energyGraphCtx.moveTo(40, 120);
-    energyGraphCtx.lineTo(40, 20);
-    energyGraphCtx.strokeStyle = '#000000';
-    energyGraphCtx.lineWidth = 3;
-    energyGraphCtx.stroke();
-    
-    // Draw axis labels with better positioning and larger font
-    energyGraphCtx.font = "bold 16px Arial";
-    energyGraphCtx.fillStyle = "#000000";
-    
-    // Adjusted label positions
-    energyGraphCtx.fillText("Energy", 5, 15);  // Moved higher
-    energyGraphCtx.fillText("Speed", 70, 15);  // Moved higher
-    
-    // Draw Time text with a frame/border around it
-    const timeText = "Time";
-    energyGraphCtx.save();
-    const timeTextWidth = energyGraphCtx.measureText(timeText).width;
-    energyGraphCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    energyGraphCtx.fillRect(250, 125, timeTextWidth + 10, 24); // Moved left
-    energyGraphCtx.strokeStyle = "#000000";
-    energyGraphCtx.lineWidth = 1.5;
-    energyGraphCtx.strokeRect(250, 125, timeTextWidth + 10, 24);
-    energyGraphCtx.fillStyle = "#000000";
-    energyGraphCtx.fillText(timeText, 255, 142); // Adjusted position
-    energyGraphCtx.restore();
-    
-    // Reset graph position for new data
-    graphX = 40;  // Start at the origin of our axes
-    graphY = 120;
-}
-
-function updateEnergyGraph(energy) {
-    if (!graphStarted) return;
-    
-    const maxEnergy = 100;
-    const energyPercentage = Math.min(Math.round((energy / maxEnergy) * 100), 100);
-    const speedPercentage = Math.min(Math.round((energy / maxEnergy) * 90 + 10), 100);
-    
-    energyGraphCtx.beginPath();
-    energyGraphCtx.moveTo(graphX, graphY);
-    
-    graphX += 15;
-    
-    const progress = Math.min((graphX - 40) / 240, 1);
-    const exponent = 1.8;
-    const exponentialValue = Math.pow(progress, exponent);
-    
-    graphY = 120 - (100 * exponentialValue);
-    
-    energyGraphCtx.lineTo(graphX, graphY);
-    energyGraphCtx.strokeStyle = '#ff0000';
-    energyGraphCtx.lineWidth = 8;
-    energyGraphCtx.stroke();
-    
-    energyGraphCtx.beginPath();
-    energyGraphCtx.arc(graphX, graphY, 6, 0, Math.PI * 2);
-    energyGraphCtx.fillStyle = '#ff0000';
-    energyGraphCtx.fill();
-    
-    energyGraphCtx.beginPath();
-    energyGraphCtx.arc(graphX, graphY, 8, 0, Math.PI * 2);
-    energyGraphCtx.strokeStyle = '#ff6666';
-    energyGraphCtx.lineWidth = 2;
-    energyGraphCtx.stroke();
-    
-    if (progress > 0.4) {
-        showPercentagePopup(energyPercentage, speedPercentage);
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+      
+      // Create simulation box
+      const boxGeometry = new THREE.BoxGeometry(10, 3, 1);
+      const boxMaterial = new THREE.MeshBasicMaterial({ color: 0x808080, wireframe: true });
+      box = new THREE.Mesh(boxGeometry, boxMaterial);
+      scene.add(box);
+      
+      // Create first panel
+      const firstPanelGeometry = new THREE.BoxGeometry(0.1, 3, 1);
+      const firstPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.3 });
+      firstPanel = new THREE.Mesh(firstPanelGeometry, firstPanelMaterial);
+      firstPanel.position.set(-5, 0, 0);
+      scene.add(firstPanel);
+      
+      // Create second divider with slits
+      const secondPanelGeometry = new THREE.BoxGeometry(0.3, 3, 1);
+      const secondPanelMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.3 });
+      secondPanel = new THREE.Mesh(secondPanelGeometry, secondPanelMaterial);
+      secondPanel.position.set(-2, 0, 0);
+      scene.add(secondPanel);
+      
+      // Create rectangular holes for second panel
+      const holeGeometry = new THREE.BoxGeometry(0.3, 0.1, 1);
+      const holeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 1 });
+      const hole1 = new THREE.Mesh(holeGeometry, holeMaterial);
+      const hole2 = new THREE.Mesh(holeGeometry, holeMaterial);
+      hole1.position.set(-2, 0.5, 0);
+      hole2.position.set(-2, -0.5, 0);
+      scene.add(hole1);
+      scene.add(hole2);
+      
+      // White border for holes
+      const borderGeometry = new THREE.BoxGeometry(0.35, 0.2, 1);
+      const borderMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const border1 = new THREE.Mesh(borderGeometry, borderMaterial);
+      const border2 = new THREE.Mesh(borderGeometry, borderMaterial);
+      border1.position.set(-2, 0.5, 0);
+      border2.position.set(-2, -0.5, 0);
+      scene.add(border1);
+      scene.add(border2);
+      
+      // Create third divider
+      const thirdPanelGeometry = new THREE.BoxGeometry(0.4, 3, 1);
+      const thirdPanelMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+      thirdPanel = new THREE.Mesh(thirdPanelGeometry, thirdPanelMaterial);
+      thirdPanel.position.set(1.33, 0, 0);
+      scene.add(thirdPanel);
+      
+      // Create light beam
+      const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 5, 32);
+      const beamMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8 });
+      lightBeam = new THREE.Mesh(beamGeometry, beamMaterial);
+      lightBeam.rotation.z = Math.PI / 2;
+      lightBeam.position.set(-5, 0, 0);
+      scene.add(lightBeam);
+      
+      // Setup energy graph canvas
+      energyGraphCtx = document.getElementById("graph").getContext("2d");
+      energyGraphCtx.clearRect(0, 0, 300, 150);
+      camera.position.z = 5;
+      animate();
     }
     
-    if (graphX > 100) {
-        energyGraphCtx.font = "bold 14px Arial";
-        energyGraphCtx.fillStyle = "#000000";
-        energyGraphCtx.fillText(`${energyPercentage}%`, graphX + 10, graphY);
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
     }
     
-    if (graphX >= 280) {
-        energyGraphCtx.beginPath();
-        energyGraphCtx.moveTo(graphX, graphY);
-        energyGraphCtx.lineTo(300, graphY);
-        energyGraphCtx.strokeStyle = '#ff0000';
-        energyGraphCtx.lineWidth = 8;
-        energyGraphCtx.stroke();
+    function resetExperiment() {
+      lightBeam.position.set(-5, 0, 0);
+      photons.forEach(p => scene.remove(p));
+      electrons.forEach(e => scene.remove(e));
+      photons = [];
+      electrons = [];
+      graphStarted = false;
+      energyGraphCtx.clearRect(0, 0, 300, 150);
+      graphX = 40;
+      graphY = 120;
+      document.getElementById("stage1").classList.remove("active");
+      document.getElementById("stage2").classList.remove("active");
+      document.getElementById("stage3").classList.remove("active");
+      const popups = document.querySelectorAll('.energy-popup');
+      popups.forEach(popup => popup.remove());
     }
-}
-
-function showPercentagePopup(energyPercentage, speedPercentage) {
-    document.querySelectorAll('.energy-popup').forEach(popup => popup.remove());
     
-    const popup = document.createElement('div');
-    popup.className = 'energy-popup';
-    popup.style.position = 'absolute';
-    popup.style.right = '20px';
-    popup.style.bottom = '170px';
-    popup.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-    popup.style.border = '4px solid #ff0000';
-    popup.style.borderRadius = '10px';
-    popup.style.padding = '20px';
-    popup.style.zIndex = '1000';
-    popup.style.fontWeight = 'bold';
-    popup.style.fontSize = '18px';
-    popup.style.boxShadow = '0 0 20px rgba(255,0,0,0.8)';
-    popup.style.minWidth = '180px';
-    popup.style.opacity = '0';
+    function startExperiment() {
+      resetExperiment();
+      document.querySelector(".graph").style.display = "block";
+      highlightTimelineStage("stage1");
+      updateEquations("Schrödinger's Equation: Ψ(x,t) = A * exp(i(kx - ωt))");
+      updateAnnotations("Schrödinger's Equation Determines Path Probability");
+      gsap.to(lightBeam.position, { x: -2, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+        highlightTimelineStage("stage2");
+        updateEquations("Young's Double-Slit: I(x) = I0 * cos²(π * x / λ)");
+        updateAnnotations("Young's Double-Slit Experiment - Light Interference");
+        showPhotons();
+        if (!graphStarted) startGraph();
+        gsap.to(lightBeam.position, { x: 1.33, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+          highlightTimelineStage("stage3");
+          updateEquations("Electron Absorption: E = hν + ½mv²");
+          updateAnnotations("Electron Absorption - Energy Gain");
+          showElectrons();
+          gsap.to(lightBeam.position, { x: 4, duration: animationSpeed, ease: "power1.inOut", onComplete: () => {
+            // For demonstration, update the graph with energy=50 (diagonal line)
+            updateEnergyGraph(50);
+            updateAnnotations("Experiment Complete!");
+          }});
+        }});
+      }});
+    }
     
-    popup.innerHTML = `
-        <div style="color: #ff0000; font-size: 22px; margin-bottom: 12px; text-align: center;">EFFICIENCY GAINS</div>
-        <div style="font-size: 20px; margin-bottom: 8px;">Energy: <span style="color: #ff0000; font-size: 24px;">${energyPercentage}%</span></div>
-        <div style="font-size: 20px;">Speed: <span style="color: #ff0000; font-size: 24px;">${speedPercentage}%</span></div>
-    `;
+    function highlightTimelineStage(stageId) {
+      document.getElementById("stage1").classList.remove("active");
+      document.getElementById("stage2").classList.remove("active");
+      document.getElementById("stage3").classList.remove("active");
+      document.getElementById(stageId).classList.add("active");
+    }
     
-    document.body.appendChild(popup);
+    function startGraph() {
+      graphStarted = true;
+      energyGraphCtx.clearRect(0, 0, 300, 150);
+      // Draw axes with bold lines
+      energyGraphCtx.beginPath();
+      energyGraphCtx.moveTo(40, 120);
+      energyGraphCtx.lineTo(280, 120);
+      energyGraphCtx.moveTo(40, 120);
+      energyGraphCtx.lineTo(40, 20);
+      energyGraphCtx.strokeStyle = '#000000';
+      energyGraphCtx.lineWidth = 3;
+      energyGraphCtx.stroke();
+      
+      // Draw axis labels with improved positioning
+      energyGraphCtx.font = "bold 16px Arial";
+      energyGraphCtx.fillStyle = "#000000";
+      energyGraphCtx.fillText("Energy", 5, 15);
+      energyGraphCtx.fillText("Speed", 70, 15);
+      
+      // Draw Time label with a framed background
+      const timeText = "Time";
+      energyGraphCtx.save();
+      const timeTextWidth = energyGraphCtx.measureText(timeText).width;
+      energyGraphCtx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      energyGraphCtx.fillRect(250, 125, timeTextWidth + 10, 24);
+      energyGraphCtx.strokeStyle = "#000000";
+      energyGraphCtx.lineWidth = 1.5;
+      energyGraphCtx.strokeRect(250, 125, timeTextWidth + 10, 24);
+      energyGraphCtx.fillStyle = "#000000";
+      energyGraphCtx.fillText(timeText, 255, 142);
+      energyGraphCtx.restore();
+    }
     
-    setTimeout(() => {
-        popup.style.transition = 'opacity 0.5s, transform 0.5s, box-shadow 1s';
-        popup.style.opacity = '1';
-    }, 100);
-}
-
-
-        function showPhotons() {
-            // Gradually show photons (with observer behavior)
-            for (let i = -0.5; i <= 0.5; i += 0.1) {
-                setTimeout(() => {
-                    const dotGeometry = new THREE.SphereGeometry(0.05, 32, 32);
-                    const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
-                    
-                    if (observerPresent) {
-                        // Horizontal arrangement when observer is present
-                        dot.position.set(lightBeam.position.x + i, 0, 0);
-                    } else {
-                        // Vertical arrangement when no observer
-                        dot.position.set(lightBeam.position.x, i, 0);
-                    }
-
-                    scene.add(dot); // Add each dot to the scene
-                    photons.push(dot); // Store the photon for later removal
-                }, 500); // Delay the appearance of each photon
-            }
-        }
-
-        function showElectrons() {
-            // Gradually show electrons (with observer behavior)
-            for (let i = -0.5; i <= 0.5; i += 0.1) {
-                setTimeout(() => {
-                    const dotGeometry = new THREE.SphereGeometry(0.025, 32, 32);
-                    const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
-
-                    if (observerPresent) {
-                        // Horizontal arrangement when observer is present
-                        dot.position.set(lightBeam.position.x + i, 0, 0);
-                    } else {
-                        // Vertical arrangement when no observer
-                        dot.position.set(lightBeam.position.x, i, 0);
-                    }
-
-                    scene.add(dot); // Add each dot to the scene
-                    electrons.push(dot); // Store the electron for later removal
-                }, 500); // Delay the appearance of each electron
-            }
-        }
-
-        function toggleObserver() {
-            observerPresent = document.getElementById("observer-checkbox").checked;
-            updateAnnotations(observerPresent ? "Observer Present" : "No Observer");
-        }
-
-        function updateAnimationSpeed(speed) {
-            animationSpeed = speed;
-        }
-
-        function updateEquations(text) {
-            document.getElementById("equations").innerText = "Equation: " + text;
-        }
-
-        function updateAnnotations(text) {
-            document.getElementById("annotations").innerText = text;
-        }
-
-        function updateEnergyGraph(energy) {
-            energyGraphCtx.beginPath();
-            energyGraphCtx.moveTo(graphX, graphY);
-            graphX += 10;
-            graphY = 150 - energy;
-            energyGraphCtx.lineTo(graphX, graphY);
-            energyGraphCtx.strokeStyle = '#ff0000';
-            energyGraphCtx.stroke();
-        }
-
-        function rotateView() {
-            viewAngle += Math.PI / 2; // Rotate the camera by 90 degrees
-            gsap.to(camera.position, {
-                duration: 1,
-                x: 5 * Math.cos(viewAngle),
-                z: 5 * Math.sin(viewAngle),
-                onUpdate: () => camera.lookAt(scene.position)
-            });
-        }
-        function highlightPart(part) {
-    // Reset all highlights and opacity states
-    resetHighlights();
-
-    // Highlight the corresponding text and animation part based on the selected part
-    switch(part) {
+    // Updated updateEnergyGraph function using linear mapping for a diagonal line
+    function updateEnergyGraph(energy) {
+      if (!graphStarted) return;
+      
+      // Calculate new coordinates using linear mapping:
+      // Increase x by 15 pixels; y decreases linearly from 120 to 20 as energy goes from 0 to 100.
+      const newX = graphX + 15;
+      const newY = 120 - energy; // For energy=50, newY becomes 70
+      
+      energyGraphCtx.beginPath();
+      energyGraphCtx.moveTo(graphX, graphY);
+      energyGraphCtx.lineTo(newX, newY);
+      energyGraphCtx.strokeStyle = '#ff0000';
+      energyGraphCtx.lineWidth = 8;
+      energyGraphCtx.stroke();
+      
+      // Draw a small circle at the new point
+      energyGraphCtx.beginPath();
+      energyGraphCtx.arc(newX, newY, 6, 0, Math.PI * 2);
+      energyGraphCtx.fillStyle = '#ff0000';
+      energyGraphCtx.fill();
+      
+      graphX = newX;
+      graphY = newY;
+    }
+    
+    function showPhotons() {
+      for (let i = -0.5; i <= 0.5; i += 0.1) {
+        setTimeout(() => {
+          const dotGeometry = new THREE.SphereGeometry(0.05, 32, 32);
+          const dotMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+          const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+          if (observerPresent) {
+            dot.position.set(lightBeam.position.x + i, 0, 0);
+          } else {
+            dot.position.set(lightBeam.position.x, i, 0);
+          }
+          scene.add(dot);
+          photons.push(dot);
+        }, 500);
+      }
+    }
+    
+    function showElectrons() {
+      for (let i = -0.5; i <= 0.5; i += 0.1) {
+        setTimeout(() => {
+          const dotGeometry = new THREE.SphereGeometry(0.025, 32, 32);
+          const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+          const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+          if (observerPresent) {
+            dot.position.set(lightBeam.position.x + i, 0, 0);
+          } else {
+            dot.position.set(lightBeam.position.x, i, 0);
+          }
+          scene.add(dot);
+          electrons.push(dot);
+        }, 500);
+      }
+    }
+    
+    function toggleObserver() {
+      observerPresent = document.getElementById("observer-checkbox").checked;
+      updateAnnotations(observerPresent ? "Observer Present" : "No Observer");
+    }
+    
+    function updateAnimationSpeed(speed) {
+      animationSpeed = speed;
+    }
+    
+    function updateEquations(text) {
+      document.getElementById("equations").innerText = "Equation: " + text;
+    }
+    
+    function updateAnnotations(text) {
+      document.getElementById("annotations").innerText = text;
+    }
+    
+    function rotateView() {
+      viewAngle += Math.PI / 2;
+      gsap.to(camera.position, {
+        duration: 1,
+        x: 5 * Math.cos(viewAngle),
+        z: 5 * Math.sin(viewAngle),
+        onUpdate: () => camera.lookAt(scene.position)
+      });
+    }
+    
+    function highlightPart(part) {
+      resetHighlights();
+      switch(part) {
         case "empty-space":
-            document.getElementById("explanation-empty-space").classList.add("highlight");
-            if (firstPanel) firstPanel.material.opacity = 1; // Highlighting the first panel (empty space)
-            updateAnnotations("Empty Space (Before the First Panel) - Schrödinger's Superposition");
-            break;
+          document.getElementById("explanation-empty-space").classList.add("highlight");
+          if (firstPanel) firstPanel.material.opacity = 1;
+          updateAnnotations("Empty Space – Schrödinger's Superposition");
+          break;
         case "first-panel":
-            document.getElementById("explanation-first-panel").classList.add("highlight");
-            if (secondPanel) secondPanel.material.opacity = 1; // Highlight only the first panel
-            updateAnnotations("First Panel (Metal with Two Slits) - Quantum Measurement Effect");
-            break;
+          document.getElementById("explanation-first-panel").classList.add("highlight");
+          if (secondPanel) secondPanel.material.opacity = 1;
+          updateAnnotations("First Panel – Quantum Measurement Effect");
+          break;
         case "second-third-panel":
-            document.getElementById("explanation-second-third-panel").classList.add("highlight");
-            if (secondPanel) secondPanel.material.opacity = 1; // Highlight second panel
-            if (thirdPanel) thirdPanel.material.opacity = 1; // Highlight the third panel
-            updateAnnotations("Space Between the Second and Third Panel - Young's Interference Theory");
-            break;
+          document.getElementById("explanation-second-third-panel").classList.add("highlight");
+          if (secondPanel) secondPanel.material.opacity = 1;
+          if (thirdPanel) thirdPanel.material.opacity = 1;
+          updateAnnotations("Interference Zone – Young's Interference Theory");
+          break;
         case "third-panel":
-            document.getElementById("explanation-third-panel").classList.add("highlight");
-            if (thirdPanel) thirdPanel.material.opacity = 1; // Highlight only the third panel
-            updateAnnotations("Third Panel (Semiconductor – Silicon) - Electron Absorption and Energy Conversion");
-            break;
+          document.getElementById("explanation-third-panel").classList.add("highlight");
+          if (thirdPanel) thirdPanel.material.opacity = 1;
+          updateAnnotations("Semiconductor Panel – Electron Absorption");
+          break;
+      }
     }
-}
-
-function resetHighlights() {
-    // Remove highlights from text and animation parts
-    document.getElementById("explanation-empty-space").classList.remove("highlight");
-    document.getElementById("explanation-first-panel").classList.remove("highlight");
-    document.getElementById("explanation-second-third-panel").classList.remove("highlight");
-    document.getElementById("explanation-third-panel").classList.remove("highlight");
-
-    // Reset animation part visibility or opacity
-    if (firstPanel) firstPanel.material.opacity = 0.3; // Reset opacity to original state
-    if (secondPanel) secondPanel.material.opacity = 0.3;
-    if (thirdPanel) thirdPanel.material.opacity = 0.3;
-}
-
-function toggleExplanation() {
-    const explanationBox = document.getElementById("explanation-box");
-    if (explanationBox.style.display === "none" || explanationBox.style.display === "") {
+    
+    function resetHighlights() {
+      document.getElementById("explanation-empty-space").classList.remove("highlight");
+      document.getElementById("explanation-first-panel").classList.remove("highlight");
+      document.getElementById("explanation-second-third-panel").classList.remove("highlight");
+      document.getElementById("explanation-third-panel").classList.remove("highlight");
+      if (firstPanel) firstPanel.material.opacity = 0.3;
+      if (secondPanel) secondPanel.material.opacity = 0.3;
+      if (thirdPanel) thirdPanel.material.opacity = 0.3;
+    }
+    
+    function toggleExplanation() {
+      const explanationBox = document.getElementById("explanation-box");
+      if (explanationBox.style.display === "none" || explanationBox.style.display === "") {
         explanationBox.style.display = "block";
-    } else {
+      } else {
         explanationBox.style.display = "none";
-        resetHighlights(); // Reset highlights when the explanation box is closed
+        resetHighlights();
+      }
     }
-}
-
-window.onload = function() {
-    init();
-    // Ensure the panels and necessary variables are initialized
-    if (typeof firstPanel === "undefined") {
+    
+    window.onload = function() {
+      init();
+      if (typeof firstPanel === "undefined") {
         console.error("First panel is not initialized.");
-    }
-    if (typeof secondPanel === "undefined") {
+      }
+      if (typeof secondPanel === "undefined") {
         console.error("Second panel is not initialized.");
-    }
-    if (typeof thirdPanel === "undefined") {
+      }
+      if (typeof thirdPanel === "undefined") {
         console.error("Third panel is not initialized.");
-    }
-};
-    </script>
+      }
+    };
+  </script>
 </body>
 </html>

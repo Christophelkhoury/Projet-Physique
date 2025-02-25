@@ -9,6 +9,9 @@ This project is a Flask-based web application that visualizes a theoretical quan
 - **Electron Interaction:** Electrons absorb photons, increasing their energy and speed.
 - **Quantum Theories Representation:** Implements key quantum mechanics principles.
 - **Observer Effect:** The experiment dynamically changes based on the presence of an observer.
+- **Accurate Animation Timing:** Ensures photons and electrons move correctly relative to the observer effect.
+- **Straight-Line Particle Movement:** Particles now move in a direct path without unintended vertical displacement.
+- **Delayed Electron Movement:** Electrons only spawn when photons reach the panel in the observer-off state.
 - **Interactive Controls:** Rotate the simulation, control animation speed, and toggle observer mode.
 - **Dynamic Energy Graph:** Visualizes energy changes in electrons.
 - **Text Annotations:** Displays explanatory text for each stage of the experiment.
@@ -52,6 +55,7 @@ Ensure you have the following installed:
 - Use the interactive controls to rotate and zoom into the 3D experiment.
 - Adjust animation speed to observe photon and electron behavior in detail.
 - Toggle observer mode to see how it affects the quantum experiment.
+- Observe improved animation logic that maintains correct movement patterns.
 
 ## Future Enhancements
 - Implement real-time interaction using WebSockets.
